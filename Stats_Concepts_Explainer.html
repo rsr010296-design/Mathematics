@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Statistics — Mean, Median, Mode & More</title>
+<link href="https://fonts.googleapis.com/css2?family=Righteous&family=Nunito:wght@400;600;700;800;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg: #f7f3ee;
+  --ink: #1a1a2e;
+  --card: #ffffff;
+  --mean: #ff6b35;
+  --median: #4a90d9;
+  --mode: #2ecc71;
+  --cum: #9b59b6;
+  --grouped: #e67e22;
+  --ungrouped: #1abc9c;
+  --border: #e8e0d5;
+  --muted: #888;
+  --shadow: 0 4px 24px rgba(0,0,0,.1);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: 'Nunito', sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  min-height: 100vh;
+}
+
+/* ── HERO ── */
+.hero {
+  background: var(--ink);
+  padding: 48px 40px 40px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(45deg, rgba(255,255,255,.02) 0, rgba(255,255,255,.02) 1px, transparent 0, transparent 50%);
+  background-size: 20px 20px;
+}
+.hero h1 {
+  font-family: 'Righteous', cursive;
+  font-size: clamp(28px, 5vw, 52px);
+  color: #fff;
+  position: relative;
+  z-index: 1;
+  margin-bottom: 10px;
+}
+.hero h1 span { color: #ffd700; }
+.hero p {
+  font-size: 15px;
+  color: rgba(255,255,255,.6);
+  position: relative;
+  z-index: 1;
+  max-width: 500px;
+  margin: 0 auto 24px;
+}
+.hero .topic-pills {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 1;
+}
+.hero .tp {
+  padding: 6px 18px;
+  border-radius: 50px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  border: none;
+  transition: all .25s;
+  letter-spacing: .5px;
+}
+.tp:hover { transform: translateY(-2px); filter: brightness(1.1); }
+.tp-mean  { background: var(--mean);   color: #fff; }
+.tp-med   { background: var(--median); color: #fff; }
+.tp-mode  { background: var(--mode);   color: #fff; }
+.tp-grp   { background: var(--grouped);color: #fff; }
+.tp-cum   { background: var(--cum);    color: #fff; }
+
+/* ── NAV TABS ── */
+.tabs {
+  display: flex;
+  gap: 0;
+  background: #fff;
+  border-bottom: 2px solid var(--border);
+  overflow-x: auto;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.tab {
+  flex: 1;
+  min-width: 100px;
+  padding: 14px 10px;
+  font-size: 12px;
+  font-weight: 800;
+  text-align: center;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: all .2s;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.tab:hover { color: var(--ink); background: var(--bg); }
+.tab.active { color: var(--ink); border-bottom-color: var(--c); background: var(--bg); }
+
+/* ── SECTIONS ── */
+.section { display: none; padding: 32px 32px 48px; max-width: 960px; margin: 0 auto; }
+.section.active { display: block; }
+
+.section-title {
+  font-family: 'Righteous', cursive;
+  font-size: clamp(22px, 4vw, 36px);
+  margin-bottom: 6px;
+}
+.section-sub {
+  font-size: 14px;
+  color: var(--muted);
+  margin-bottom: 28px;
+  line-height: 1.6;
+}
+
+/* ── CARDS ── */
+.card {
+  background: var(--card);
+  border-radius: 18px;
+  padding: 24px 28px;
+  box-shadow: var(--shadow);
+  border: 1.5px solid var(--border);
+  margin-bottom: 20px;
+}
+.card h3 {
+  font-size: 15px;
+  font-weight: 800;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.card p { font-size: 13.5px; line-height: 1.75; color: #444; }
+.accent-bar {
+  width: 100%;
+  height: 4px;
+  border-radius: 2px;
+  margin-bottom: 18px;
+}
+
+/* ── INLINE FORMULA ── */
+.formula-box {
+  background: var(--ink);
+  color: #ffd700;
+  font-family: 'DM Mono', monospace;
+  border-radius: 12px;
+  padding: 14px 20px;
+  font-size: 15px;
+  text-align: center;
+  margin: 14px 0;
+  letter-spacing: .5px;
+}
+
+/* ── VISUAL BLOCKS ── */
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+@media(max-width:620px) { .grid2,.grid3 { grid-template-columns:1fr; } }
+
+/* ── DATA DOTS (animated number line) ── */
+.number-line-wrap {
+  background: #f0f0f0;
+  border-radius: 14px;
+  padding: 20px 24px;
+  margin: 16px 0;
+  overflow: hidden;
+}
+.number-line-wrap h4 { font-size: 13px; font-weight: 800; margin-bottom: 14px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+.nl-dots { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+.dot-val {
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 800;
+  border: 2px solid transparent;
+  animation: popIn .4s backwards;
+}
+@keyframes popIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.dot-normal { background: #e8e8e8; color: #555; border-color: #ccc; }
+.dot-mean   { background: #fff0eb; color: var(--mean);   border-color: var(--mean);   transform: scale(1.15); }
+.dot-median { background: #ebf4ff; color: var(--median); border-color: var(--median); transform: scale(1.15); }
+.dot-mode   { background: #eafaf2; color: var(--mode);   border-color: var(--mode);   transform: scale(1.15); }
+.dot-legend { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 10px; }
+.dl { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; }
+.dl-dot { width: 12px; height: 12px; border-radius: 50%; }
+
+/* ── BAR CHART ── */
+.bar-chart-wrap {
+  background: #f8f8f8;
+  border-radius: 14px;
+  padding: 20px 16px 8px;
+  margin: 14px 0;
+}
+.bar-chart-title { font-size: 12px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 14px; }
+.bars { display: flex; align-items: flex-end; gap: 6px; height: 120px; }
+.bar-item { display: flex; flex-direction: column; align-items: center; flex: 1; }
+.bar-fill {
+  width: 100%;
+  border-radius: 6px 6px 0 0;
+  transform-origin: bottom;
+  animation: growBar .8s ease backwards;
+  animation-delay: var(--d, 0s);
+  position: relative;
+}
+@keyframes growBar { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+.bar-val { font-size: 10px; font-weight: 800; margin-bottom: 4px; color: #555; }
+.bar-lbl { font-size: 9px; color: var(--muted); margin-top: 6px; text-align: center; }
+.bar-modal { outline: 3px solid var(--mean); outline-offset: 2px; }
+
+/* ── TABLE ── */
+.stat-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.stat-table th { background: var(--ink); color: #fff; padding: 10px 12px; text-align: center; font-size: 11px; letter-spacing: 1px; }
+.stat-table td { padding: 9px 12px; text-align: center; border-bottom: 1px solid var(--border); }
+.stat-table tr:last-child td { background: #f0f0f0; font-weight: 800; }
+.stat-table td.hi-cyan { color: var(--median); font-weight: 800; background: #ebf4ff; }
+.stat-table td.hi-orange { color: var(--mean); font-weight: 800; background: #fff0eb; }
+.stat-table td.hi-green { color: var(--mode); font-weight: 800; background: #eafaf2; }
+.stat-table td.hi-purple { color: var(--cum); font-weight: 800; background: #f5eefa; }
+.stat-table td.median-row { background: rgba(74,144,217,.08); }
+
+/* ── OGIVE CANVAS ── */
+#ogiveCanvas { border-radius: 12px; border: 1.5px solid var(--border); display: block; margin: 14px auto; }
+
+/* ── COMPARISON TABLE ── */
+.compare-card {
+  background: var(--card);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  border: 1.5px solid var(--border);
+  margin-bottom: 20px;
+}
+.compare-card table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.compare-card th { padding: 12px 14px; text-align: left; font-size: 11px; font-weight: 800; letter-spacing: 1px; color: #fff; }
+.th-mean   { background: var(--mean); }
+.th-median { background: var(--median); }
+.th-mode   { background: var(--mode); }
+.th-head   { background: var(--ink); }
+.compare-card td { padding: 10px 14px; border-bottom: 1px solid var(--border); line-height: 1.5; color: #444; font-size: 12.5px; }
+.compare-card tr:last-child td { border-bottom: none; }
+.compare-card tr:nth-child(even) td { background: #fafafa; }
+
+/* ── STORY BOXES ── */
+.story-box {
+  border-radius: 14px;
+  padding: 18px 22px;
+  margin: 12px 0;
+  font-size: 13.5px;
+  line-height: 1.75;
+  border-left: 5px solid;
+}
+.sb-mean   { background: #fff5f0; border-color: var(--mean); }
+.sb-median { background: #f0f6ff; border-color: var(--median); }
+.sb-mode   { background: #f0faf4; border-color: var(--mode); }
+.sb-cum    { background: #f9f0ff; border-color: var(--cum); }
+
+/* ── INTERACTIVE SORT ── */
+.sort-demo {
+  background: #f4f4f4;
+  border-radius: 14px;
+  padding: 20px;
+  margin: 14px 0;
+}
+.sort-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; align-items: center; }
+.sort-num {
+  width: 44px; height: 44px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; font-weight: 800;
+  transition: all .4s;
+}
+.sn-unsorted { background: #ddd; color: #555; }
+.sn-sorted   { background: var(--median); color: #fff; }
+.sn-mid      { background: var(--ink); color: #ffd700; transform: scale(1.2); }
+.sort-btn {
+  padding: 8px 20px; border-radius: 50px; border: none;
+  background: var(--median); color: #fff;
+  font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 12px;
+  cursor: pointer; transition: all .2s;
+}
+.sort-btn:hover { background: var(--ink); }
+
+/* ── QUEUE VISUAL (Cumulative) ── */
+.queue-wrap { background: #f4f4f4; border-radius: 14px; padding: 20px; margin: 14px 0; }
+.queue-row { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 10px; }
+.q-person {
+  width: 36px; height: 36px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  transition: all .3s;
+  animation: qpop .3s backwards;
+  animation-delay: var(--d, 0s);
+}
+@keyframes qpop { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform: translateY(0); } }
+.q-in  { background: var(--cum); }
+.q-out { background: #ddd; opacity: .4; }
+.q-label { font-size: 12px; color: var(--muted); font-weight: 700; }
+.q-counter { font-family: 'DM Mono', monospace; font-size: 22px; font-weight: 700; color: var(--cum); }
+
+/* ── HIGHLIGHT CHIP ── */
+.chip {
+  display: inline-block;
+  padding: 2px 10px; border-radius: 50px;
+  font-size: 12px; font-weight: 800;
+  margin: 0 2px;
+}
+.cm { background: #fff0eb; color: var(--mean); }
+.cd { background: #ebf4ff; color: var(--median); }
+.co { background: #eafaf2; color: var(--mode); }
+.cp { background: #f5eefa; color: var(--cum); }
+.cg { background: #fef3e8; color: var(--grouped); }
+
+/* ── PILL BADGES ── */
+.badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 12px; border-radius: 50px; font-size: 11px; font-weight: 800;
+  border: 1.5px solid;
+}
+
+/* ── ANIMATIONS ── */
+@keyframes slideUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+.section.active .card,
+.section.active .compare-card,
+.section.active .number-line-wrap,
+.section.active .bar-chart-wrap,
+.section.active .story-box,
+.section.active .sort-demo,
+.section.active .queue-wrap {
+  animation: slideUp .5s backwards;
+}
+.section.active .card:nth-child(1)  { animation-delay: .05s; }
+.section.active .card:nth-child(2)  { animation-delay: .12s; }
+.section.active .card:nth-child(3)  { animation-delay: .19s; }
+.section.active .card:nth-child(4)  { animation-delay: .26s; }
+
+/* ── SUBTITLE ── */
+#subbox {
+  position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%);
+  max-width: 820px; width: 90%;
+  background: rgba(26,26,46,.92); backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,215,0,.3); border-radius: 14px;
+  padding: 11px 20px; font-size: 13.5px; line-height: 1.6;
+  text-align: center; color: #fff; z-index: 200;
+  opacity: 0; transition: opacity .4s;
+}
+#subbox.show { opacity: 1; }
+#subbox .lbl { font-size: 9px; letter-spacing: 2px; color: #ffd700; margin-bottom: 3px; font-weight: 800; text-transform: uppercase; }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <h1>Statistics Concepts <span>Explained Simply</span></h1>
+  <p>Mean · Median · Mode · Grouped vs Ungrouped · Cumulative Frequency</p>
+  <div class="topic-pills">
+    <button class="tp tp-mean"  onclick="goTo(0)">📐 Mean</button>
+    <button class="tp tp-med"   onclick="goTo(1)">📍 Median</button>
+    <button class="tp tp-mode"  onclick="goTo(2)">🏆 Mode</button>
+    <button class="tp tp-grp"   onclick="goTo(3)">📦 Grouped vs Ungrouped</button>
+    <button class="tp tp-cum"   onclick="goTo(4)">📈 Cumulative Frequency</button>
+    <button class="tp" style="background:#ffd700;color:#000" onclick="goTo(5)">⚡ Compare All</button>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" style="--c:var(--mean)"   onclick="goTo(0)">📐 Mean</div>
+  <div class="tab"        style="--c:var(--median)" onclick="goTo(1)">📍 Median</div>
+  <div class="tab"        style="--c:var(--mode)"   onclick="goTo(2)">🏆 Mode</div>
+  <div class="tab"        style="--c:var(--grouped)"onclick="goTo(3)">📦 Grouped Data</div>
+  <div class="tab"        style="--c:var(--cum)"    onclick="goTo(4)">📈 Cumulative</div>
+  <div class="tab"        style="--c:#ffd700"       onclick="goTo(5)">⚡ Compare</div>
+</div>
+
+<!-- ═══════════════════════════════════
+     SECTION 0: MEAN
+═══════════════════════════════════ -->
+<div class="section active" id="sec-0">
+  <div class="accent-bar" style="background:var(--mean)"></div>
+  <div class="section-title" style="color:var(--mean)">📐 Mean — The Fair Share</div>
+  <p class="section-sub">Mean is the <strong>average</strong>. Add all values, divide by how many there are. It tells you what each person would get if everything was shared <em>equally</em>.</p>
+
+  <div class="card">
+    <h3>🍕 Real-Life Idea</h3>
+    <div class="story-box sb-mean">
+      5 friends order pizza. One eats <strong>1 slice</strong>, another eats <strong>3</strong>, another <strong>5</strong>, another <strong>3</strong>, another <strong>3</strong>. Total = 15 slices, 5 people.<br>
+      <strong>Mean = 15 ÷ 5 = 3 slices</strong> — if everyone had eaten equally, each would get 3.
+    </div>
+    <div class="formula-box">Mean (x̄) = Sum of all values / Number of values = Σxᵢ / n</div>
+  </div>
+
+  <div class="card">
+    <h3 style="color:var(--mean)">🧮 Step-by-Step Example</h3>
+    <p style="margin-bottom:14px">Marks of 7 students: <strong>45, 67, 72, 45, 89, 60, 72</strong></p>
+    <div class="number-line-wrap">
+      <h4>The Numbers</h4>
+      <div class="nl-dots" id="mean-dots"></div>
+      <div class="dot-legend">
+        <div class="dl"><div class="dl-dot" style="background:var(--mean)"></div> Mean value</div>
+        <div class="dl"><div class="dl-dot" style="background:#e8e8e8;border:1px solid #ccc"></div> Data values</div>
+      </div>
+    </div>
+    <div style="background:#f9f9f9;border-radius:12px;padding:16px;font-size:13.5px;line-height:2;">
+      Step 1: Add all → 45 + 67 + 72 + 45 + 89 + 60 + 72 = <span class="chip cm">450</span><br>
+      Step 2: Divide by 7 → 450 ÷ 7 = <span class="chip cm">64.3</span><br>
+      <strong>Mean = 64.3 marks</strong>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3>✅ When Mean works well</h3>
+      <p>When data has <strong>no extreme outliers</strong>. Example: exam marks of a class, daily temperature, runs scored in 10 overs.</p>
+    </div>
+    <div class="card">
+      <h3>⚠️ When Mean misleads</h3>
+      <p>A CEO earning ₹50 crore joins a team of 9 people earning ₹50,000 each. Mean salary shoots up — but it doesn't represent <em>anyone's</em> actual pay! <span class="chip cm">Affected by extremes</span></p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     SECTION 1: MEDIAN
+═══════════════════════════════════ -->
+<div class="section" id="sec-1">
+  <div class="accent-bar" style="background:var(--median)"></div>
+  <div class="section-title" style="color:var(--median)">📍 Median — The Middle Person</div>
+  <p class="section-sub">Median is the <strong>middle value</strong> when data is sorted in order. Half the values are below it, half are above it.</p>
+
+  <div class="card">
+    <h3>🚶 Real-Life Idea</h3>
+    <div class="story-box sb-median">
+      7 people stand in a line sorted by height. The <strong>4th person</strong> is the median — 3 people are shorter on one side, 3 are taller on the other. The median person is right in the middle.
+    </div>
+    <div class="formula-box">
+      Odd n: Median = value at position (n+1)/2<br>
+      Even n: Median = average of n/2 and (n/2 + 1) positions
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 style="color:var(--median)">🧮 Interactive Example — Sort &amp; Find</h3>
+    <p style="margin-bottom:14px;font-size:13.5px;color:#555">Marks: <strong>72, 45, 89, 45, 67, 60, 72</strong> — Click to sort and find the median!</p>
+    <div class="sort-demo">
+      <p style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Unsorted:</p>
+      <div class="sort-row" id="unsorted-row"></div>
+      <button class="sort-btn" onclick="doSort()">▶ Sort &amp; Find Median</button>
+      <div id="sorted-result" style="margin-top:14px;display:none;">
+        <p style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Sorted (7 values → middle is position 4):</p>
+        <div class="sort-row" id="sorted-row"></div>
+        <div style="background:#ebf4ff;border-radius:10px;padding:12px 16px;margin-top:10px;font-size:13.5px;line-height:1.8;">
+          n = 7 (odd) → Median position = (7+1)/2 = <strong>4th value</strong><br>
+          Sorted: 45, 45, 60, <span style="background:var(--median);color:#fff;padding:2px 8px;border-radius:6px;font-weight:800">67</span>, 72, 72, 89<br>
+          <strong>Median = 67 marks</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3>✅ Median's superpower</h3>
+      <p>NOT affected by extreme values. Even if one student scores 0 or 100, the middle value doesn't change much. <span class="chip cd">Outlier-proof!</span></p>
+    </div>
+    <div class="card">
+      <h3>🏠 Real-world use</h3>
+      <p>News always says <em>"median household income"</em> or <em>"median house price"</em> — because a few billionaires would skew the mean. Median gives the true picture of the <strong>typical</strong> person.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     SECTION 2: MODE
+═══════════════════════════════════ -->
+<div class="section" id="sec-2">
+  <div class="accent-bar" style="background:var(--mode)"></div>
+  <div class="section-title" style="color:var(--mode)">🏆 Mode — The Most Popular</div>
+  <p class="section-sub">Mode is the value that appears the <strong>most number of times</strong>. It's the crowd favourite — the most common value in the data.</p>
+
+  <div class="card">
+    <h3>👟 Real-Life Idea</h3>
+    <div class="story-box sb-mode">
+      A shoe shop records sizes sold today: 6, 7, 8, 8, 9, 7, 8, 6, 8, 7, 8<br>
+      Size 8 appears <strong>5 times</strong> — more than any other.<br>
+      <strong>Mode = 8</strong> → Order the most stock in size 8!
+    </div>
+    <div class="formula-box">Mode = value that occurs most frequently in the data</div>
+  </div>
+
+  <div class="card">
+    <h3 style="color:var(--mode)">📊 Visual Example — Spot the Mode</h3>
+    <p style="font-size:13.5px;color:#555;margin-bottom:14px">Marks: <strong>45, 67, 72, 45, 89, 67, 45, 90, 72, 60</strong> — The tallest bar is the mode!</p>
+    <div class="bar-chart-wrap">
+      <div class="bar-chart-title">Frequency of each marks value</div>
+      <div class="bars" id="mode-bars"></div>
+      <div style="display:flex;gap:14px;margin-top:6px;justify-content:center;flex-wrap:wrap" id="mode-labels"></div>
+    </div>
+    <div style="background:#eafaf2;border-radius:10px;padding:12px 16px;margin-top:8px;font-size:13.5px;">
+      45 appears <strong>3 times</strong> ← highest! &nbsp; 67 appears 2 times. &nbsp; 72 appears 2 times.<br>
+      <strong>Mode = 45</strong>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3>📌 Multiple Modes</h3>
+      <p>Data can have <strong>no mode</strong> (all values unique), <strong>one mode</strong> (unimodal), or <strong>two modes</strong> (bimodal). Example: 45, 45, 67, 72, 72 — two modes: 45 and 72.</p>
+    </div>
+    <div class="card">
+      <h3>🎯 When Mode is most useful</h3>
+      <p>When you need the <strong>most popular</strong> choice — most common T-shirt size to manufacture, most popular subject chosen by students, most frequent age in a population.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     SECTION 3: GROUPED VS UNGROUPED
+═══════════════════════════════════ -->
+<div class="section" id="sec-3">
+  <div class="accent-bar" style="background:var(--grouped)"></div>
+  <div class="section-title" style="color:var(--grouped)">📦 Grouped vs Ungrouped Data</div>
+  <p class="section-sub">The same data can be presented in two different ways. As you deal with larger datasets, grouping becomes essential.</p>
+
+  <div class="grid2">
+    <div class="card">
+      <h3 style="color:var(--ungrouped)">🗂 Ungrouped Data</h3>
+      <p style="margin-bottom:12px">Raw individual values, listed one by one. Easy when data is small.</p>
+      <div style="background:#f0faf8;border-radius:10px;padding:14px;font-size:13px;line-height:2;">
+        Marks of 10 students:<br>
+        <strong>45, 67, 72, 45, 89, 67, 45, 90, 72, 60</strong>
+      </div>
+      <div style="margin-top:12px;font-size:13px;color:#555;line-height:1.7;">
+        ✅ Shows every individual value<br>
+        ✅ Exact mean, median, mode possible<br>
+        ❌ Gets unwieldy with 1000+ values
+      </div>
+    </div>
+    <div class="card">
+      <h3 style="color:var(--grouped)">📊 Grouped Data</h3>
+      <p style="margin-bottom:12px">Values organized into <span class="chip cg">class intervals</span>. Used when data is large.</p>
+      <table class="stat-table">
+        <thead><tr><th>Marks (Class Interval)</th><th>Students (fᵢ)</th></tr></thead>
+        <tbody>
+          <tr><td>40 – 60</td><td>4</td></tr>
+          <tr><td>60 – 80</td><td>4</td></tr>
+          <tr><td>80 – 100</td><td>2</td></tr>
+          <tr><td>Total</td><td>10</td></tr>
+        </tbody>
+      </table>
+      <div style="margin-top:12px;font-size:13px;color:#555;line-height:1.7;">
+        ✅ Compact, easy to read<br>
+        ✅ Works for thousands of values<br>
+        ⚠️ Individual values lost — use <span class="chip cg">class mark</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>🔖 Class Mark — The Key Idea in Grouped Data</h3>
+    <div class="story-box" style="border-color:var(--grouped);background:#fef8f0;">
+      In grouped data, we don't know the exact values inside each class. So we use the <strong>class mark</strong> (midpoint) as a representative value for the whole class.<br><br>
+      Class 40–60 → Class mark = (40 + 60) ÷ 2 = <strong>50</strong><br>
+      Class 60–80 → Class mark = (60 + 80) ÷ 2 = <strong>70</strong><br>
+      Class 80–100 → Class mark = (80 + 100) ÷ 2 = <strong>90</strong>
+    </div>
+    <div class="formula-box">Class Mark (xᵢ) = (Upper Class Limit + Lower Class Limit) / 2</div>
+  </div>
+
+  <div class="card">
+    <h3>📐 Mean from Grouped Data (Direct Method)</h3>
+    <p style="margin-bottom:12px;font-size:13.5px;color:#555">We multiply each class mark by its frequency, sum up, then divide by total frequency:</p>
+    <table class="stat-table">
+      <thead><tr><th>Class Interval</th><th>fᵢ</th><th>Class Mark (xᵢ)</th><th>fᵢ × xᵢ</th></tr></thead>
+      <tbody>
+        <tr><td>40 – 60</td><td>4</td><td>50</td><td class="hi-orange">200</td></tr>
+        <tr><td>60 – 80</td><td>4</td><td>70</td><td class="hi-orange">280</td></tr>
+        <tr><td>80 – 100</td><td>2</td><td>90</td><td class="hi-orange">180</td></tr>
+        <tr><td>Total</td><td>10</td><td>—</td><td class="hi-orange">660</td></tr>
+      </tbody>
+    </table>
+    <div class="formula-box" style="margin-top:12px;">x̄ = 660 / 10 = <strong>66</strong></div>
+    <p style="font-size:12.5px;color:var(--muted);margin-top:8px">Note: Exact mean from ungrouped data = 65.2. Grouped gives 66 — slightly different because we used class marks as approximations.</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     SECTION 4: CUMULATIVE FREQUENCY
+═══════════════════════════════════ -->
+<div class="section" id="sec-4">
+  <div class="accent-bar" style="background:var(--cum)"></div>
+  <div class="section-title" style="color:var(--cum)">📈 Cumulative Frequency</div>
+  <p class="section-sub">Cumulative frequency is a <strong>running total</strong> of frequencies. It answers: <em>"How many values are less than or equal to this point?"</em></p>
+
+  <div class="card">
+    <h3>🎟 Real-Life Idea — The Queue</h3>
+    <div class="story-box sb-cum">
+      30 people are in a queue to enter a stadium. After the gate, a counter clicks for each person who passes.<br>
+      After 4 people pass → counter shows <strong>4</strong><br>
+      After 10 more pass → counter shows <strong>14</strong><br>
+      After 6 more pass → counter shows <strong>20</strong><br>
+      That running count is exactly <strong>cumulative frequency</strong>!
+    </div>
+    <div id="queue-demo" class="queue-wrap">
+      <p style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Click a class to see who has "passed through"</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+        <button onclick="showQueue(1)" style="padding:7px 16px;border-radius:50px;border:none;background:var(--cum);color:#fff;font-family:'Nunito',sans-serif;font-weight:800;font-size:12px;cursor:pointer">Up to 20 marks (cf=4)</button>
+        <button onclick="showQueue(2)" style="padding:7px 16px;border-radius:50px;border:none;background:var(--cum);color:#fff;font-family:'Nunito',sans-serif;font-weight:800;font-size:12px;cursor:pointer">Up to 40 marks (cf=10)</button>
+        <button onclick="showQueue(3)" style="padding:7px 16px;border-radius:50px;border:none;background:var(--cum);color:#fff;font-family:'Nunito',sans-serif;font-weight:800;font-size:12px;cursor:pointer">Up to 60 marks (cf=20)</button>
+        <button onclick="showQueue(4)" style="padding:7px 16px;border-radius:50px;border:none;background:var(--cum);color:#fff;font-family:'Nunito',sans-serif;font-weight:800;font-size:12px;cursor:pointer">All 30 (cf=30)</button>
+      </div>
+      <div class="queue-row" id="queue-row"></div>
+      <div style="margin-top:10px;" id="queue-label"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 style="color:var(--cum)">📋 Building the Cumulative Frequency Table</h3>
+    <p style="margin-bottom:12px;font-size:13.5px;color:#555">Marks of 30 students. Add each frequency to the running total:</p>
+    <table class="stat-table">
+      <thead><tr><th>Marks</th><th>Students (fᵢ)</th><th>Cumulative Freq (cf)</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td>0 – 20</td><td>4</td><td class="hi-purple">4</td><td style="text-align:left;font-size:12px;color:#555">4 students scored less than 20</td></tr>
+        <tr><td>20 – 40</td><td>6</td><td class="hi-purple">4+6 = 10</td><td style="text-align:left;font-size:12px;color:#555">10 students scored less than 40</td></tr>
+        <tr><td>40 – 60</td><td>10</td><td class="hi-purple">10+10 = 20</td><td style="text-align:left;font-size:12px;color:#555">20 students scored less than 60</td></tr>
+        <tr><td>60 – 80</td><td>7</td><td class="hi-purple">20+7 = 27</td><td style="text-align:left;font-size:12px;color:#555">27 students scored less than 80</td></tr>
+        <tr><td>80 – 100</td><td>3</td><td class="hi-purple">27+3 = 30</td><td style="text-align:left;font-size:12px;color:#555">All 30 students scored less than 100</td></tr>
+        <tr><td>Total</td><td>30</td><td>—</td><td>—</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>📈 The Ogive — Cumulative Frequency Curve</h3>
+    <p style="font-size:13.5px;color:#555;margin-bottom:12px">Plot (upper class limit, cf) → join with a smooth curve → you get the <strong>Less Than Ogive</strong> (S-shaped). The halfway point (n/2 = 15) gives the <span class="chip cp">Median</span>.</p>
+    <canvas id="ogiveCanvas" width="580" height="220"></canvas>
+    <div style="background:#f9f0ff;border-radius:10px;padding:12px 16px;margin-top:10px;font-size:13.5px;line-height:1.8;">
+      On the Y-axis, find <strong>n/2 = 15</strong> → draw horizontal line to curve → drop vertical → read X value.<br>
+      <strong>Median ≈ 50 marks</strong> (read from graph)
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     SECTION 5: COMPARE ALL
+═══════════════════════════════════ -->
+<div class="section" id="sec-5">
+  <div class="accent-bar" style="background:linear-gradient(90deg,var(--mean),var(--median),var(--mode))"></div>
+  <div class="section-title">⚡ Mean vs Median vs Mode</div>
+  <p class="section-sub">Same data, three different questions, three different answers. Here's the complete picture.</p>
+
+  <div class="card">
+    <h3>🎯 One Dataset, Three Answers</h3>
+    <p style="font-size:13.5px;color:#555;margin-bottom:14px">Marks of 10 students: <strong>45, 67, 72, 45, 89, 67, 45, 90, 72, 60</strong></p>
+    <div class="grid3">
+      <div style="background:#fff5f0;border-radius:14px;padding:18px;text-align:center;border:2px solid var(--mean);">
+        <div style="font-size:28px;margin-bottom:8px">📐</div>
+        <div style="font-size:11px;font-weight:800;color:var(--mean);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Mean</div>
+        <div style="font-size:28px;font-weight:900;color:var(--mean);font-family:'Righteous',cursive">65.2</div>
+        <div style="font-size:11px;color:#888;margin-top:6px">Sum=652, n=10<br>652÷10=65.2</div>
+      </div>
+      <div style="background:#ebf4ff;border-radius:14px;padding:18px;text-align:center;border:2px solid var(--median);">
+        <div style="font-size:28px;margin-bottom:8px">📍</div>
+        <div style="font-size:11px;font-weight:800;color:var(--median);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Median</div>
+        <div style="font-size:28px;font-weight:900;color:var(--median);font-family:'Righteous',cursive">67</div>
+        <div style="font-size:11px;color:#888;margin-top:6px">Sorted: 45,45,45,60,<strong>67,67</strong>,72,72,89,90<br>Avg of 5th & 6th</div>
+      </div>
+      <div style="background:#eafaf2;border-radius:14px;padding:18px;text-align:center;border:2px solid var(--mode);">
+        <div style="font-size:28px;margin-bottom:8px">🏆</div>
+        <div style="font-size:11px;font-weight:800;color:var(--mode);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Mode</div>
+        <div style="font-size:28px;font-weight:900;color:var(--mode);font-family:'Righteous',cursive">45</div>
+        <div style="font-size:11px;color:#888;margin-top:6px">Appears 3 times<br>More than any other</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="compare-card">
+    <table>
+      <thead>
+        <tr>
+          <th class="th-head">Feature</th>
+          <th class="th-mean">📐 Mean</th>
+          <th class="th-median">📍 Median</th>
+          <th class="th-mode">🏆 Mode</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Simple meaning</strong></td><td>Fair share / average</td><td>Middle value</td><td>Most common</td></tr>
+        <tr><td><strong>Affected by extremes?</strong></td><td>✅ Yes — very much</td><td>❌ No — resistant</td><td>❌ No — resistant</td></tr>
+        <tr><td><strong>Formula</strong></td><td>Σxᵢ/n or Σfᵢxᵢ/Σfᵢ</td><td>Middle of sorted data</td><td>Highest frequency value</td></tr>
+        <tr><td><strong>Best used when</strong></td><td>Data is symmetric, no outliers</td><td>Data is skewed, has outliers</td><td>Need most popular value</td></tr>
+        <tr><td><strong>Real-life example</strong></td><td>Average exam score of class</td><td>Median house price in city</td><td>Most popular shoe size</td></tr>
+        <tr><td><strong>Can there be multiple?</strong></td><td>No — always unique</td><td>No — always unique</td><td>Yes — bimodal or none</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>🔗 The Empirical Relationship (NCERT)</h3>
+    <p style="font-size:13.5px;color:#555;margin-bottom:12px">For moderately skewed distributions, these three are approximately related:</p>
+    <div class="formula-box" style="font-size:18px">3 × Median = Mode + 2 × Mean</div>
+    <div style="background:#f9f9f9;border-radius:10px;padding:14px;font-size:13.5px;line-height:2;margin-top:10px;">
+      Using our values: Mean ≈ 65.2, Mode = 45, Median = 67<br>
+      Check: 3 × 67 = 201 &nbsp; | &nbsp; 45 + 2×65.2 = 175.4 ← Not exact, it's <em>approximately</em> true<br>
+      <strong>Useful tip:</strong> If you know any two, you can <em>estimate</em> the third!
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>🧭 Quick Decision Guide — Which to Use?</h3>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:10px;">
+      <div style="display:flex;gap:12px;align-items:center;background:#fff5f0;border-radius:10px;padding:12px 16px;">
+        <span style="font-size:24px">💰</span>
+        <p style="font-size:13px"><strong style="color:var(--mean)">Use Mean</strong> when data is balanced — average marks, average rainfall, average speed.</p>
+      </div>
+      <div style="display:flex;gap:12px;align-items:center;background:#ebf4ff;border-radius:10px;padding:12px 16px;">
+        <span style="font-size:24px">🏡</span>
+        <p style="font-size:13px"><strong style="color:var(--median)">Use Median</strong> when a few extreme values could distort the picture — house prices, incomes, ages.</p>
+      </div>
+      <div style="display:flex;gap:12px;align-items:center;background:#eafaf2;border-radius:10px;padding:12px 16px;">
+        <span style="font-size:24px">👗</span>
+        <p style="font-size:13px"><strong style="color:var(--mode)">Use Mode</strong> when you need the most popular choice — clothing sizes, favourite colour, most common age.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="subbox"><div class="lbl">💬 Tip</div><div id="subtext"></div></div>
+
+<script>
+// ── TAB NAVIGATION ──
+const SECTIONS = document.querySelectorAll('.section');
+const TABS = document.querySelectorAll('.tab');
+
+function goTo(i) {
+  SECTIONS.forEach((s,j) => s.classList.toggle('active', i===j));
+  TABS.forEach((t,j) => t.classList.toggle('active', i===j));
+  window.scrollTo({top: 0, behavior:'smooth'});
+  showTip(i);
+  if(i===4) drawOgive();
+}
+
+// ── TIPS ──
+const TIPS = [
+  "Mean is like splitting a restaurant bill equally — everyone pays the same share regardless of what they ate.",
+  "Median is like finding the middle seat in a row. Sort everyone by height, the person in the middle is the median.",
+  "Mode is what a shop keeper cares about — which size sells the most. Not average, not middle — most popular!",
+  "Grouped data is like sorting laundry into piles: whites, darks, colours. You lose individual items but see the big picture.",
+  "Cumulative frequency is a running scorecard. Each row tells you the total count up to that point.",
+  "Remember: 3 Median = Mode + 2 Mean. Know any two, find the third — very useful in board exams!"
+];
+let tipTimer;
+function showTip(i) {
+  const box = document.getElementById('subbox');
+  const txt = document.getElementById('subtext');
+  txt.textContent = TIPS[i];
+  box.classList.add('show');
+  clearTimeout(tipTimer);
+  tipTimer = setTimeout(() => box.classList.remove('show'), 6000);
+}
+
+// ── MEAN DOTS ──
+function buildMeanDots() {
+  const vals = [45, 67, 72, 45, 89, 60, 72];
+  const mean = (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1);
+  const el = document.getElementById('mean-dots');
+  el.innerHTML = '';
+  vals.forEach((v,i) => {
+    const d = document.createElement('div');
+    d.className = 'dot-val dot-normal';
+    d.textContent = v;
+    d.style.animationDelay = (i*0.08)+'s';
+    el.appendChild(d);
+  });
+  // add mean dot
+  const sep = document.createElement('span');
+  sep.style.fontSize='13px';sep.style.color='#aaa';sep.style.margin='0 6px';sep.textContent='→ Mean:';
+  el.appendChild(sep);
+  const md = document.createElement('div');
+  md.className='dot-val dot-mean';
+  md.textContent=mean;
+  md.style.animationDelay='0.7s';
+  el.appendChild(md);
+}
+buildMeanDots();
+
+// ── SORT DEMO (MEDIAN) ──
+const sortVals = [72, 45, 89, 45, 67, 60, 72];
+const sortedVals = [...sortVals].sort((a,b)=>a-b);
+(function buildUnsorted(){
+  const el = document.getElementById('unsorted-row');
+  sortVals.forEach(v => {
+    const d = document.createElement('div');
+    d.className='sort-num sn-unsorted';d.textContent=v;el.appendChild(d);
+  });
+})();
+function doSort() {
+  document.getElementById('sorted-result').style.display='block';
+  const el = document.getElementById('sorted-row');
+  el.innerHTML='';
+  const mid = Math.floor(sortedVals.length/2);
+  sortedVals.forEach((v,i) => {
+    const d = document.createElement('div');
+    d.className = i===mid ? 'sort-num sn-mid' : 'sort-num sn-sorted';
+    d.textContent=v;
+    d.style.animationDelay=(i*0.08)+'s';
+    d.style.animation='popIn .4s backwards';
+    el.appendChild(d);
+  });
+}
+
+// ── MODE BARS ──
+function buildModeBars() {
+  const data = {45:3, 67:2, 72:2, 89:1, 90:1, 60:1};
+  const maxF = 3;
+  const barsEl = document.getElementById('mode-bars');
+  const labelsEl = document.getElementById('mode-labels');
+  barsEl.innerHTML=''; labelsEl.innerHTML='';
+  let delay=0;
+  Object.entries(data).forEach(([val,freq]) => {
+    const isMode = freq===maxF;
+    const item = document.createElement('div');
+    item.className='bar-item';
+    const h = (freq/maxF)*100;
+    const fill = document.createElement('div');
+    fill.className='bar-fill' + (isMode?' bar-modal':'');
+    fill.style.cssText=`height:${h}px;background:${isMode?'var(--mode)':'#bbb'};--d:${delay}s`;
+    const lbl = document.createElement('div');
+    lbl.className='bar-val'; lbl.textContent=freq+'x'; lbl.style.marginBottom='4px';
+    const nlbl = document.createElement('div');
+    nlbl.className='bar-lbl'; nlbl.textContent=val;
+    item.appendChild(lbl); item.appendChild(fill); item.appendChild(nlbl);
+    barsEl.appendChild(item);
+    delay+=0.1;
+  });
+}
+buildModeBars();
+
+// ── QUEUE DEMO ──
+const queueData = [4, 6, 10, 10]; // cumulative additions
+function showQueue(level) {
+  const total = 30;
+  const cumuls = [4, 10, 20, 30];
+  const row = document.getElementById('queue-row');
+  const lbl = document.getElementById('queue-label');
+  row.innerHTML='';
+  const count = cumuls[level-1];
+  for(let i=0;i<total;i++){
+    const p = document.createElement('div');
+    p.className = 'q-person ' + (i<count?'q-in':'q-out');
+    p.textContent = i<count?'🧑':'🧑';
+    p.style.setProperty('--d',(i*0.03)+'s');
+    row.appendChild(p);
+  }
+  const labels=['0–20','20–40','40–60','80–100'];
+  lbl.innerHTML=`<span class="q-label">Students who scored less than ${[20,40,60,100][level-1]} marks:</span>&nbsp;&nbsp;<span class="q-counter">${count}</span><span class="q-label"> out of 30</span>`;
+}
+showQueue(3);
+
+// ── OGIVE CANVAS ──
+function drawOgive() {
+  const canvas = document.getElementById('ogiveCanvas');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const pad = {l:50, r:30, t:20, b:40};
+  const cw = W - pad.l - pad.r;
+  const ch = H - pad.t - pad.b;
+
+  ctx.clearRect(0,0,W,H);
+
+  // background
+  ctx.fillStyle='#fafafa';
+  ctx.roundRect(0,0,W,H,12);
+  ctx.fill();
+
+  // data points (upper limit, cf)
+  const pts = [[0,0],[20,4],[40,10],[60,20],[80,27],[100,30]];
+  const maxX=100, maxY=30;
+
+  function tx(x){ return pad.l + (x/maxX)*cw; }
+  function ty(y){ return pad.t + ch - (y/maxY)*ch; }
+
+  // grid lines
+  ctx.strokeStyle='#e8e8e8'; ctx.lineWidth=1;
+  for(let i=0;i<=6;i++){
+    const y=i*5;
+    ctx.beginPath(); ctx.moveTo(pad.l,ty(y)); ctx.lineTo(pad.l+cw,ty(y)); ctx.stroke();
+  }
+
+  // axes
+  ctx.strokeStyle='#333'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(pad.l,pad.t); ctx.lineTo(pad.l,pad.t+ch); ctx.lineTo(pad.l+cw,pad.t+ch); ctx.stroke();
+
+  // axis labels
+  ctx.fillStyle='#666'; ctx.font='10px Nunito,sans-serif'; ctx.textAlign='center';
+  [0,20,40,60,80,100].forEach(x => {
+    ctx.fillText(x, tx(x), pad.t+ch+18);
+  });
+  ctx.textAlign='right';
+  [0,5,10,15,20,25,30].forEach(y => {
+    ctx.fillText(y, pad.l-6, ty(y)+4);
+  });
+  ctx.save(); ctx.translate(14,H/2); ctx.rotate(-Math.PI/2);
+  ctx.textAlign='center'; ctx.font='11px Nunito,sans-serif'; ctx.fillStyle='#555';
+  ctx.fillText('Cumulative Frequency', 0, 0); ctx.restore();
+  ctx.textAlign='center'; ctx.font='11px Nunito,sans-serif';
+  ctx.fillText('Upper Class Limits (Marks)', pad.l+cw/2, H-4);
+
+  // Ogive curve
+  ctx.strokeStyle='#9b59b6'; ctx.lineWidth=3;
+  ctx.beginPath();
+  pts.forEach(([x,y],i) => {
+    if(i===0) ctx.moveTo(tx(x),ty(y));
+    else ctx.lineTo(tx(x),ty(y));
+  });
+  ctx.stroke();
+
+  // Smooth curve effect using quadratic curves
+  ctx.strokeStyle='rgba(155,89,182,.25)'; ctx.lineWidth=8;
+  ctx.beginPath();
+  pts.forEach(([x,y],i) => {
+    if(i===0) ctx.moveTo(tx(x),ty(y));
+    else ctx.lineTo(tx(x),ty(y));
+  });
+  ctx.stroke();
+
+  // Points
+  pts.forEach(([x,y]) => {
+    ctx.beginPath();
+    ctx.arc(tx(x),ty(y),5,0,Math.PI*2);
+    ctx.fillStyle='#9b59b6'; ctx.fill();
+    ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke();
+  });
+
+  // Median line (n/2 = 15)
+  const medY=15;
+  // find x where cf=15 → between 40–60 (10 to 20), interpolate
+  // at x=40, cf=10; at x=60, cf=20. At cf=15, x=40+(15-10)/(20-10)*20=50
+  const medX=50;
+  ctx.setLineDash([5,4]); ctx.strokeStyle='var(--median)'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(pad.l, ty(medY)); ctx.lineTo(tx(medX), ty(medY)); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(tx(medX), ty(medY)); ctx.lineTo(tx(medX), pad.t+ch); ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.fillStyle='#4a90d9'; ctx.font='bold 11px Nunito,sans-serif';
+  ctx.textAlign='left'; ctx.fillText('n/2=15 →', pad.l+4, ty(medY)-5);
+  ctx.textAlign='center'; ctx.fillText('Median≈50', tx(medX), pad.t+ch+18);
+
+  // dot at intersection
+  ctx.beginPath(); ctx.arc(tx(medX),ty(medY),6,0,Math.PI*2);
+  ctx.fillStyle='#ffd700'; ctx.fill();
+  ctx.strokeStyle='#333'; ctx.lineWidth=2; ctx.stroke();
+
+  // title
+  ctx.fillStyle='#333'; ctx.font='bold 12px Nunito,sans-serif'; ctx.textAlign='left';
+  ctx.fillText('Less Than Ogive', pad.l+8, pad.t+16);
+}
+
+// init tip
+setTimeout(()=>showTip(0), 800);
+</script>
+</body>
+</html>
